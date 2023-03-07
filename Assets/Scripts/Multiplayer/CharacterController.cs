@@ -1,7 +1,8 @@
+using Unity.Burst.CompilerServices;
 using Unity.Netcode;
 using UnityEngine;
 
-public class CharacterInput : NetworkBehaviour
+public class CharacterController : NetworkBehaviour
 {
     [SerializeField]
     private float _speed = 1f;
@@ -32,6 +33,10 @@ public class CharacterInput : NetworkBehaviour
     private Vector3 _horizontalInput => new Vector3(_inputs.x, 0, _inputs.z);
     private float _verticalInput => _inputs.y;
     //
+    public override void OnGainedOwnership()
+    {
+        CameraManager.SetTarget(transform);
+    }
 
     private void OnConnectedToServer()
     {
@@ -51,7 +56,7 @@ public class CharacterInput : NetworkBehaviour
     {
         UpdateGravityVel();
         InputCheck();
-        CheckForGround();
+        //CheckForGround();
     }
 
     private void UpdateGravityVel()
@@ -112,13 +117,33 @@ public class CharacterInput : NetworkBehaviour
             }
             Vector3 tempClosestGroundPosition = _groundHits[0].ClosestPoint(_feetTransform.position);
 
-            transform.position = tempClosestGroundPosition - _feetTransform.localPosition;
+            Vector3 newPos = tempClosestGroundPosition;
+            var f = CheckGroundRay(newPos + Vector3.up * 4, newPos - Vector3.up * 1f);
+            if (f.collider != null)
+            {
+                newPos = f.point;
+            }
+            transform.position = newPos - _feetTransform.localPosition;
             _isGrounded = true;
         }
         else
         {
             _isGrounded = false;
         }
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="startPos"></param>
+    /// <param name="endPos"></param>
+    /// <returns>RaycastHit</returns>
+    private RaycastHit CheckGroundRay(Vector3 startPos, Vector3 endPos)
+    {
+        RaycastHit[] hit = new RaycastHit[1];
+        Physics.RaycastNonAlloc(startPos, endPos - startPos, hit, (endPos - startPos).magnitude, _groundMask, QueryTriggerInteraction.Ignore);
+        
+        return hit[0];
     }
 
     public void FixedUpdate()
@@ -132,6 +157,12 @@ public class CharacterInput : NetworkBehaviour
     protected void OwnerFixedUpdate()
     {
         transform.position += transform.rotation * _horizontalInput.normalized * _speed * Time.fixedDeltaTime;
+        CheckForGround();
+        Gravity();
+    }
+
+    protected void Gravity()
+    {
         if (!_isGrounded)
         {
             transform.position += Vector3.up * _currentGravity * Time.fixedDeltaTime;
@@ -141,6 +172,22 @@ public class CharacterInput : NetworkBehaviour
     private void OnDrawGizmos()
     {
         if (_groundCheck != null)
+        {
             Gizmos.DrawWireSphere(_groundCheck.position, _groundCheckRange);
+            if (Physics.OverlapSphereNonAlloc(_groundCheck.position, _groundCheckRange, _groundHits, _groundMask) != 0)
+            {
+                if (_currentGravity < 0)
+                {
+                    _currentGravity = 0;
+
+                }
+                Vector3 tempClosestGroundPosition = _groundHits[0].ClosestPoint(_feetTransform.position);
+                Gizmos.DrawCube(tempClosestGroundPosition, new Vector3(0.1f,0.1f,0.1f));
+                var startPos = tempClosestGroundPosition + Vector3.up * 4;
+                var endPos = tempClosestGroundPosition;
+                Gizmos.DrawLine(startPos, endPos);
+
+            }
+        }
     }
 }
