@@ -33,10 +33,21 @@ public class CharacterController : NetworkBehaviour
     private Vector3 _horizontalInput => new Vector3(_inputs.x, 0, _inputs.z);
     private float _verticalInput => _inputs.y;
     //
+
+    public override void OnNetworkSpawn()
+    {
+        if (IsLocalPlayer)
+        {
+            CameraManager.SetTarget(transform);
+        }
+    }
+
     public override void OnGainedOwnership()
     {
-        CameraManager.SetTarget(transform);
+        //CameraManager.SetTarget(transform);
+        //_rigidbody = GetComponent<Rigidbody>();
     }
+
 
     private void OnConnectedToServer()
     {
@@ -56,6 +67,8 @@ public class CharacterController : NetworkBehaviour
     {
         UpdateGravityVel();
         InputCheck();
+        transform.position += transform.rotation * _horizontalInput.normalized * _speed * Time.deltaTime;
+        Gravity();
         //CheckForGround();
     }
 
@@ -156,16 +169,14 @@ public class CharacterController : NetworkBehaviour
 
     protected void OwnerFixedUpdate()
     {
-        transform.position += transform.rotation * _horizontalInput.normalized * _speed * Time.fixedDeltaTime;
         CheckForGround();
-        Gravity();
     }
 
     protected void Gravity()
     {
         if (!_isGrounded)
         {
-            transform.position += Vector3.up * _currentGravity * Time.fixedDeltaTime;
+            transform.position += Vector3.up * _currentGravity * Time.deltaTime;
         }
     }
 

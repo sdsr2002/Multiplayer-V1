@@ -38,19 +38,32 @@ public class CameraManager : MonoBehaviour
     {
         if (_target == null) return;
 
-        AboveCameraMovement();
+        //AboveCameraMovement();
+        FirstPersonMovement();
     }
 
+    const float _maxSpeed = 100f;
     private void AboveCameraMovement()
     {
-        _nextPosition = Vector3.SmoothDamp(_nextPosition, _target.position + _target.rotation * _offset, ref _currentVelocity, _smoothDamp);
         _nextRotation = Quaternion.RotateTowards(_nextRotation, Quaternion.LookRotation(_target.position - transform.position, Vector3.up), _turnSpeedRadius * Time.deltaTime);
+        _nextPosition = Vector3.SmoothDamp(_nextPosition, _target.position + _target.rotation * _offset, ref _currentVelocity, _smoothDamp, _maxSpeed, Time.deltaTime);
     }
 
-    private void FixedUpdate()
+    private void FirstPersonMovement()
+    {
+        _nextRotation = _target.rotation;
+        _nextPosition = _target.position;
+    }
+
+    private void LateUpdate()
     {
         if (_target == null) return;
         transform.position = _nextPosition;
         transform.rotation = _nextRotation;
+    }
+
+    private enum Type
+    {
+
     }
 }
