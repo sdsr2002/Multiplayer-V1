@@ -42,12 +42,6 @@ public class CharacterController : NetworkBehaviour
         }
     }
 
-    public override void OnGainedOwnership()
-    {
-        //CameraManager.SetTarget(transform);
-        //_rigidbody = GetComponent<Rigidbody>();
-    }
-
 
     private void OnConnectedToServer()
     {
