@@ -34,6 +34,7 @@ Shader "Unlit/LearningShader"
             {
                 float4 vertex : SV_POSITION; // clip space position
                 float2 uv : TEXCOORD0;
+                //float2 normal: TEXCOORD1;
             };
 
             sampler2D _MainTex;
@@ -52,6 +53,7 @@ Shader "Unlit/LearningShader"
             {
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv);
+                
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 return col;
